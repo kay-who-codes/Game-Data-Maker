@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Data Maker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Variables ── */
+    :root {
+      --bg:           #131313;
+      --surface:      #1c1c1c;
+      --surface-2:    #242424;
+      --border:       #2e2e2e;
+      --text:         #e0e0e0;
+      --text-muted:   #707070;
+      --accent:       #ff2d78;
+      --accent-dark:  #e6004c;
+      --accent-glow:  rgba(255,45,120,0.18);
+      --radius:       12px;
+      --mono:         'Space Mono', monospace;
+      --sans:         'DM Sans', sans-serif;
+      --transition:   0.22s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Glow blob ── */
+    .glow-blob {
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255,45,120,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: blobPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes blobPulse {
+      from { transform: scale(1) translate(0, 0); }
+      to   { transform: scale(1.15) translate(-40px, 40px); }
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      margin-bottom: 48px;
+      animation: fadeSlideDown 0.6s ease both;
+    }
+    .header-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-family: var(--mono);
+      font-size: clamp(1.6rem, 5vw, 2.6rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: #fff;
+    }
+    h1 span {
+      color: var(--accent);
+    }
+    .header-sub {
+      margin-top: 10px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      max-width: 520px;
+    }
+
+    /* ── Section card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      animation: fadeSlideUp 0.5s ease both;
+    }
+    .card:nth-child(2) { animation-delay: 0.08s; }
+    .card:nth-child(3) { animation-delay: 0.16s; }
+    .card:nth-child(4) { animation-delay: 0.24s; }
+
+    .card-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Form controls ── */
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 520px) {
+      .controls-row { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    select, textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select {
+      padding: 14px 40px 14px 16px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23707070' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      cursor: pointer;
+      min-height: 48px;
+    }
+    select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    select option { background: var(--surface-2); }
+
+    textarea {
+      padding: 14px 16px;
+      resize: vertical;
+      min-height: 200px;
+      line-height: 1.7;
+    }
+    textarea::placeholder { color: var(--text-muted); opacity: 0.7; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .stat-num {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ── Output ── */
+    .output-wrapper {
+      position: relative;
+    }
+    .output-area {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.75;
+      color: #ccc;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 120px;
+      max-height: 480px;
+      overflow-y: auto;
+      transition: border-color var(--transition);
+    }
+    .output-area:empty::before {
+      content: '// Your JSON lines will appear here in real-time...';
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+    .output-area.has-content { border-color: #333; }
+
+    /* Syntax coloring */
+    .j-key   { color: #ff7eb3; }
+    .j-str   { color: #7dd3a8; }
+    .j-brace { color: #888; }
+    .j-comma { color: #555; }
+
+    /* ── Copy button ── */
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: all var(--transition);
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .copy-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .copy-btn.copied {
+      background: #1a4a2e;
+      border-color: #2d7a4a;
+      color: #7dd3a8;
+    }
+    .copy-btn svg { width: 12px; height: 12px; }
+
+    /* ── Empty state ── */
+    .empty-hint {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    .empty-hint .icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      opacity: 0.4;
+    }
+
+    /* ── Divider line accent ── */
+    .accent-line {
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      border-radius: 2px;
+      margin-bottom: 40px;
+      width: 60px;
+    }
+
+    /* ── Scrollbar ── */
+    .output-area::-webkit-scrollbar { width: 6px; }
+    .output-area::-webkit-scrollbar-track { background: transparent; }
+    .output-area::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .output-area::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ── Animations ── */
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    /* ── Live indicator ── */
+    .live-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 2s ease infinite;
+    }
+
+    /* ── Responsive tweaks ── */
+    @media (max-width: 480px) {
+      .wrapper { padding: 32px 16px 60px; }
+      .card { padding: 20px 16px; }
+      .copy-btn { position: static; margin-bottom: 10px; align-self: flex-start; }
+      .output-wrapper { display: flex; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="glow-blob"></div>
+
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <p class="header-eyebrow">// tool</p>
+    <h1>Game Data<span>_</span>Maker</h1>
+    <div class="accent-line"></div>
+    <p class="header-sub">Paste your text lines, pick a category and setting — structured JSON objects are generated live.</p>
+  </header>
+
+  <!-- Inputs -->
+  <section class="card" aria-label="Configuration">
+    <div class="card-label">Configuration</div>
+    <div class="controls-row">
+      <div>
+        <label for="category">Category</label>
+        <select id="category" aria-label="Select category">
+          <option value="Gambit">Gambit</option>
+          <option value="Game">Game</option>
+          <option value="Joke">Joke</option>
+          <option value="NLP">NLP</option>
+          <option value="Opener">Opener</option>
+          <option value="Question">Question</option>
+          <option value="Seduction">Seduction</option>
+          <option value="Statmaxing">Statmaxing</option>
+          <option value="Story">Story</option>
+          <option value="Truism">Truism</option>
+          <option value="Body Language">Body Language</option>
+          <option value="Reply">Reply</option>
+
+
+        </select>
+      </div>
+      <div>
+        <label for="setting">Setting</label>
+        <select id="setting" aria-label="Select setting">
+          <option value="Social">Social</option>
+          <option value="Group">Group</option>
+          <option value="One on One">One on One</option>
+          <option value="Public">Public</option>
+          <option value="Solo">Solo</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Text input -->
+  <section class="card" aria-label="Text input">
+    <div class="card-label">Text Lines</div>
+    <label for="textInput">Enter one item per line — each line becomes a JSON object</label>
+    <textarea
+      id="textInput"
+      placeholder="Why did the scarecrow win an award? Because he was outstanding in his field.&#10;Tell me about a time you took a leap of faith.&#10;What's the funniest thing that happened to you this week?"
+      aria-label="Text input"
+    ></textarea>
+    <div class="stats-bar" id="statsBar" aria-live="polite">
+      <span class="stat">Lines: <span class="stat-num" id="lineCount">0</span></span>
+      <span class="stat">Non-empty: <span class="stat-num" id="nonEmptyCount">0</span></span>
+      <span class="stat">Objects: <span class="stat-num" id="objCount">0</span></span>
+    </div>
+  </section>
+
+  <!-- Output -->
+  <section class="card" aria-label="JSON output">
+    <div class="card-label"><span class="live-dot"></span>Live Output</div>
+    <div class="output-wrapper">
+      <button class="copy-btn" id="copyBtn" aria-label="Copy JSON to clipboard" title="Copy to clipboard">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+          <path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/>
+        </svg>
+        Copy
+      </button>
+      <div class="output-area" id="outputArea" role="region" aria-label="Generated JSON" aria-live="polite"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const textInput    = document.getElementById('textInput');
+  const categoryEl   = document.getElementById('category');
+  const settingEl    = document.getElementById('setting');
+  const outputArea   = document.getElementById('outputArea');
+  const lineCountEl  = document.getElementById('lineCount');
+  const nonEmptyEl   = document.getElementById('nonEmptyCount');
+  const objCountEl   = document.getElementById('objCount');
+  const copyBtn      = document.getElementById('copyBtn');
+
+  /* ── Escape special chars in JSON strings ── */
+  function escapeStr(s) {
+    return s
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"');
+  }
+
+  /* ── Build plain text output ── */
+  function buildPlainText(lines, category, setting) {
+    return lines
+      .map(line => `  { text: "${escapeStr(line)}", category: "${escapeStr(category)}", setting: "${escapeStr(setting)}" },`)
+      .join('\n');
+  }
+
+  /* ── Build syntax-highlighted HTML ── */
+  function buildHighlightedHTML(lines, category, setting) {
+    return lines.map(line => {
+      const t = escapeStr(line);
+      const c = escapeStr(category);
+      const s = escapeStr(setting);
+      return (
+        `  <span class="j-brace">{</span> ` +
+        `<span class="j-key">text</span>: <span class="j-str">"${t}"</span>, ` +
+        `<span class="j-key">category</span>: <span class="j-str">"${c}"</span>, ` +
+        `<span class="j-key">setting</span>: <span class="j-str">"${s}"</span> ` +
+        `<span class="j-brace">}</span><span class="j-comma">,</span>`
+      );
+    }).join('\n');
+  }
+
+  /* ── Core update function ── */
+  function update() {
+    const raw      = textInput.value;
+    const allLines = raw.split('\n');
+    const lines    = allLines.map(l => l.trim()).filter(l => l.length > 0);
+    const category = categoryEl.value;
+    const setting  = settingEl.value;
+
+    /* Update stats */
+    lineCountEl.textContent  = allLines.length;
+    nonEmptyEl.textContent   = lines.length;
+    objCountEl.textContent   = lines.length;
+
+    if (lines.length === 0) {
+      outputArea.innerHTML = '';
+      outputArea.classList.remove('has-content');
+      return;
+    }
+
+    outputArea.innerHTML = buildHighlightedHTML(lines, category, setting);
+    outputArea.classList.add('has-content');
+  }
+
+  /* ── Event listeners ── */
+  textInput.addEventListener('input', update);
+  categoryEl.addEventListener('change', update);
+  settingEl.addEventListener('change', update);
+
+  /* ── Copy to clipboard ── */
+  copyBtn.addEventListener('click', async () => {
+    const raw    = textInput.value;
+    const lines  = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length === 0) return;
+
+    const plain = buildPlainText(lines, categoryEl.value, settingEl.value);
+
+    try {
+      await navigator.clipboard.writeText(plain);
+      copyBtn.classList.add('copied');
+      copyBtn.innerHTML = `
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="2 8 6 12 14 4"/>
+        </svg>
+        Copied!`;
+      setTimeout(() => {
+        copyBtn.classList.remove('copied');
+        copyBtn.innerHTML = `
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+            <path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/>
+          </svg>
+          Copy`;
+      }, 2200);
+    } catch {
+      /* Fallback for older browsers */
+      const el = document.createElement('textarea');
+      el.value = plain;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+  });
+
+  /* ── Initial render ── */
+  update();
+</script>
+
+</body>
+</html>
