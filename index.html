@@ -243,11 +243,74 @@
     .j-brace { color: #888; }
     .j-comma { color: #555; }
 
-    /* ── Copy button ── */
-    .copy-btn {
+    /* ── Action bar (copy + cut toggle) ── */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       position: absolute;
       top: 12px;
       right: 12px;
+    }
+
+    /* ── Cut toggle ── */
+    .cut-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      transition: all var(--transition);
+    }
+    .cut-toggle:hover {
+      border-color: #555;
+      color: var(--text);
+    }
+    .cut-toggle.active {
+      background: rgba(255, 45, 120, 0.08);
+      border-color: rgba(255, 45, 120, 0.35);
+      color: var(--accent);
+    }
+
+    /* pill switch */
+    .toggle-track {
+      width: 28px;
+      height: 15px;
+      background: var(--border);
+      border-radius: 8px;
+      position: relative;
+      transition: background var(--transition);
+      flex-shrink: 0;
+    }
+    .cut-toggle.active .toggle-track {
+      background: var(--accent);
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform var(--transition);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .cut-toggle.active .toggle-thumb {
+      transform: translateX(13px);
+    }
+
+    /* ── Copy/Cut button ── */
+    .copy-btn {
       background: var(--surface-2);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -274,7 +337,26 @@
       border-color: #2d7a4a;
       color: #7dd3a8;
     }
+    /* Cut mode styling */
+    .copy-btn.cut-mode {
+      border-color: rgba(255, 45, 120, 0.35);
+      color: var(--accent);
+    }
+    .copy-btn.cut-mode:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
     .copy-btn svg { width: 12px; height: 12px; }
+
+    /* ── Cut flash: brief red border on textarea when text is cleared ── */
+    @keyframes cutFlash {
+      0%   { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+      100% { border-color: var(--border); box-shadow: none; }
+    }
+    textarea.cut-flash {
+      animation: cutFlash 0.6s ease forwards;
+    }
 
     /* ── Empty state ── */
     .empty-hint {
@@ -332,7 +414,7 @@
     @media (max-width: 480px) {
       .wrapper { padding: 32px 16px 60px; }
       .card { padding: 20px 16px; }
-      .copy-btn { position: static; margin-bottom: 10px; align-self: flex-start; }
+      .action-bar { position: static; margin-bottom: 10px; flex-direction: row-reverse; justify-content: flex-start; }
       .output-wrapper { display: flex; flex-direction: column; }
     }
   </style>
@@ -405,13 +487,31 @@
   <section class="card" aria-label="JSON output">
     <div class="card-label"><span class="live-dot"></span>Live Output</div>
     <div class="output-wrapper">
-      <button class="copy-btn" id="copyBtn" aria-label="Copy JSON to clipboard" title="Copy to clipboard">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="5" y="5" width="9" height="9" rx="1.5"/>
-          <path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/>
-        </svg>
-        Copy
-      </button>
+
+      <div class="action-bar">
+        <!-- Cut mode toggle -->
+        <button
+          class="cut-toggle"
+          id="cutToggle"
+          role="switch"
+          aria-checked="false"
+          aria-label="Toggle cut mode — clears text after copying"
+          title="Cut mode: clears the input after copying"
+        >
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          Cut
+        </button>
+
+        <!-- Copy / Cut button -->
+        <button class="copy-btn" id="copyBtn" aria-label="Copy JSON to clipboard" title="Copy to clipboard">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+            <path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/>
+          </svg>
+          Copy
+        </button>
+      </div>
+
       <div class="output-area" id="outputArea" role="region" aria-label="Generated JSON" aria-live="polite"></div>
     </div>
   </section>
@@ -427,6 +527,38 @@
   const nonEmptyEl   = document.getElementById('nonEmptyCount');
   const objCountEl   = document.getElementById('objCount');
   const copyBtn      = document.getElementById('copyBtn');
+  const cutToggle    = document.getElementById('cutToggle');
+
+  let cutMode = false;
+
+  /* ── Cut toggle ── */
+  cutToggle.addEventListener('click', () => {
+    cutMode = !cutMode;
+    cutToggle.classList.toggle('active', cutMode);
+    cutToggle.setAttribute('aria-checked', String(cutMode));
+
+    // Update copy button label + style to reflect mode
+    syncButtonLabel();
+  });
+
+  function syncButtonLabel(state = null) {
+    // state: null = default, 'done' = success feedback
+    if (state === 'done') return; // handled separately
+    copyBtn.classList.toggle('cut-mode', cutMode);
+    const icon = cutMode
+      ? `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+           <circle cx="5.5" cy="4.5" r="2"/>
+           <circle cx="5.5" cy="11.5" r="2"/>
+           <path d="M14 3L7.5 6.5M14 13L7.5 9.5M7.5 6.5L7.5 9.5"/>
+         </svg>`
+      : `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+           <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+           <path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/>
+         </svg>`;
+    copyBtn.innerHTML = `${icon} ${cutMode ? 'Cut' : 'Copy'}`;
+    copyBtn.setAttribute('aria-label', cutMode ? 'Cut JSON to clipboard and clear input' : 'Copy JSON to clipboard');
+    copyBtn.setAttribute('title', cutMode ? 'Cut mode: copies and clears the input' : 'Copy to clipboard');
+  }
 
   /* ── Escape special chars in JSON strings ── */
   function escapeStr(s) {
@@ -486,7 +618,7 @@
   categoryEl.addEventListener('change', update);
   settingEl.addEventListener('change', update);
 
-  /* ── Copy to clipboard ── */
+  /* ── Copy / Cut to clipboard ── */
   copyBtn.addEventListener('click', async () => {
     const raw    = textInput.value;
     const lines  = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -494,38 +626,50 @@
 
     const plain = buildPlainText(lines, categoryEl.value, settingEl.value);
 
-    try {
-      await navigator.clipboard.writeText(plain);
-      copyBtn.classList.add('copied');
-      copyBtn.innerHTML = `
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="2 8 6 12 14 4"/>
-        </svg>
-        Copied!`;
-      setTimeout(() => {
-        copyBtn.classList.remove('copied');
-        copyBtn.innerHTML = `
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="5" y="5" width="9" height="9" rx="1.5"/>
-            <path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/>
-          </svg>
-          Copy`;
-      }, 2200);
-    } catch {
-      /* Fallback for older browsers */
-      const el = document.createElement('textarea');
-      el.value = plain;
-      el.style.position = 'fixed';
-      el.style.opacity = '0';
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
+    const doClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(plain);
+      } catch {
+        /* Fallback for older browsers */
+        const el = document.createElement('textarea');
+        el.value = plain;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+    };
+
+    await doClipboard();
+
+    /* If cut mode: clear the textarea and flash it */
+    if (cutMode) {
+      textInput.value = '';
+      update();
+      textInput.classList.remove('cut-flash'); // reset to re-trigger animation
+      void textInput.offsetWidth;              // force reflow
+      textInput.classList.add('cut-flash');
+      textInput.addEventListener('animationend', () => textInput.classList.remove('cut-flash'), { once: true });
     }
+
+    /* Success feedback */
+    const label = cutMode ? 'Cut!' : 'Copied!';
+    const checkIcon = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>`;
+    copyBtn.classList.add('copied');
+    copyBtn.classList.remove('cut-mode');
+    copyBtn.innerHTML = `${checkIcon} ${label}`;
+
+    setTimeout(() => {
+      copyBtn.classList.remove('copied');
+      syncButtonLabel();
+    }, 2200);
   });
 
   /* ── Initial render ── */
   update();
+  syncButtonLabel();
 </script>
 
 </body>
