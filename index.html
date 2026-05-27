@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    /* ── Variables ── */
     :root {
       --bg:           #131313;
       --surface:      #1c1c1c;
@@ -24,7 +23,6 @@
       --transition:   0.22s cubic-bezier(0.4,0,0.2,1);
     }
 
-    /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
@@ -37,7 +35,6 @@
       overflow-x: hidden;
     }
 
-    /* ── Noise overlay ── */
     body::before {
       content: '';
       position: fixed;
@@ -48,7 +45,6 @@
       z-index: 9999;
     }
 
-    /* ── Glow blob ── */
     .glow-blob {
       position: fixed;
       top: -200px;
@@ -65,7 +61,6 @@
       to   { transform: scale(1.15) translate(-40px, 40px); }
     }
 
-    /* ── Layout ── */
     .wrapper {
       position: relative;
       z-index: 1;
@@ -74,7 +69,6 @@
       padding: 48px 24px 80px;
     }
 
-    /* ── Header ── */
     header {
       margin-bottom: 48px;
       animation: fadeSlideDown 0.6s ease both;
@@ -94,9 +88,7 @@
       line-height: 1.15;
       color: #fff;
     }
-    h1 span {
-      color: var(--accent);
-    }
+    h1 span { color: var(--accent); }
     .header-sub {
       margin-top: 10px;
       font-size: 0.92rem;
@@ -105,7 +97,6 @@
       max-width: 520px;
     }
 
-    /* ── Section card ── */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -136,14 +127,18 @@
       background: var(--border);
     }
 
-    /* ── Form controls ── */
     .controls-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 16px;
     }
-    @media (max-width: 520px) {
+    @media (max-width: 640px) {
+      .controls-row { grid-template-columns: 1fr 1fr; }
+      .controls-row > .spice-col { grid-column: 1 / -1; }
+    }
+    @media (max-width: 400px) {
       .controls-row { grid-template-columns: 1fr; }
+      .controls-row > .spice-col { grid-column: auto; }
     }
 
     label {
@@ -190,6 +185,92 @@
     }
     textarea::placeholder { color: var(--text-muted); opacity: 0.7; }
 
+    /* ── Spice control ── */
+    .spice-control {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px 12px;
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .spice-control:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .spice-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .spice-value {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+      transition: color var(--transition);
+    }
+    .spice-value.negative { color: #7eb3ff; }
+    .spice-value.zero     { color: var(--text-muted); }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 0 3px var(--accent-glow), 0 2px 6px rgba(0,0,0,0.4);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 5px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.5);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .spice-ticks {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+    .spice-ticks span {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+    .spice-ticks span.mid { opacity: 0.8; }
+
     /* ── Stats bar ── */
     .stats-bar {
       display: flex;
@@ -211,9 +292,7 @@
     }
 
     /* ── Output ── */
-    .output-wrapper {
-      position: relative;
-    }
+    .output-wrapper { position: relative; }
     .output-area {
       background: #0d0d0d;
       border: 1px solid var(--border);
@@ -237,13 +316,12 @@
     }
     .output-area.has-content { border-color: #333; }
 
-    /* Syntax coloring */
     .j-key   { color: #ff7eb3; }
     .j-str   { color: #7dd3a8; }
+    .j-num   { color: #ffd580; }
     .j-brace { color: #888; }
     .j-comma { color: #555; }
 
-    /* ── Action bar (copy + cut toggle) ── */
     .action-bar {
       display: flex;
       align-items: center;
@@ -253,7 +331,6 @@
       right: 12px;
     }
 
-    /* ── Cut toggle ── */
     .cut-toggle {
       display: flex;
       align-items: center;
@@ -271,17 +348,13 @@
       border: 1px solid var(--border);
       transition: all var(--transition);
     }
-    .cut-toggle:hover {
-      border-color: #555;
-      color: var(--text);
-    }
+    .cut-toggle:hover { border-color: #555; color: var(--text); }
     .cut-toggle.active {
       background: rgba(255, 45, 120, 0.08);
       border-color: rgba(255, 45, 120, 0.35);
       color: var(--accent);
     }
 
-    /* pill switch */
     .toggle-track {
       width: 28px;
       height: 15px;
@@ -291,9 +364,7 @@
       transition: background var(--transition);
       flex-shrink: 0;
     }
-    .cut-toggle.active .toggle-track {
-      background: var(--accent);
-    }
+    .cut-toggle.active .toggle-track { background: var(--accent); }
     .toggle-thumb {
       position: absolute;
       top: 2px;
@@ -305,11 +376,8 @@
       transition: transform var(--transition);
       box-shadow: 0 1px 3px rgba(0,0,0,0.4);
     }
-    .cut-toggle.active .toggle-thumb {
-      transform: translateX(13px);
-    }
+    .cut-toggle.active .toggle-thumb { transform: translateX(13px); }
 
-    /* ── Copy/Cut button ── */
     .copy-btn {
       background: var(--surface-2);
       border: 1px solid var(--border);
@@ -327,51 +395,18 @@
       align-items: center;
       gap: 6px;
     }
-    .copy-btn:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-    .copy-btn.copied {
-      background: #1a4a2e;
-      border-color: #2d7a4a;
-      color: #7dd3a8;
-    }
-    /* Cut mode styling */
-    .copy-btn.cut-mode {
-      border-color: rgba(255, 45, 120, 0.35);
-      color: var(--accent);
-    }
-    .copy-btn.cut-mode:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
+    .copy-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .copy-btn.copied { background: #1a4a2e; border-color: #2d7a4a; color: #7dd3a8; }
+    .copy-btn.cut-mode { border-color: rgba(255, 45, 120, 0.35); color: var(--accent); }
+    .copy-btn.cut-mode:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
     .copy-btn svg { width: 12px; height: 12px; }
 
-    /* ── Cut flash: brief red border on textarea when text is cleared ── */
     @keyframes cutFlash {
       0%   { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
       100% { border-color: var(--border); box-shadow: none; }
     }
-    textarea.cut-flash {
-      animation: cutFlash 0.6s ease forwards;
-    }
+    textarea.cut-flash { animation: cutFlash 0.6s ease forwards; }
 
-    /* ── Empty state ── */
-    .empty-hint {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-    .empty-hint .icon {
-      font-size: 2rem;
-      margin-bottom: 10px;
-      opacity: 0.4;
-    }
-
-    /* ── Divider line accent ── */
     .accent-line {
       height: 2px;
       background: linear-gradient(90deg, var(--accent), transparent);
@@ -380,13 +415,11 @@
       width: 60px;
     }
 
-    /* ── Scrollbar ── */
     .output-area::-webkit-scrollbar { width: 6px; }
     .output-area::-webkit-scrollbar-track { background: transparent; }
     .output-area::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
     .output-area::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-    /* ── Animations ── */
     @keyframes fadeSlideDown {
       from { opacity: 0; transform: translateY(-18px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -400,7 +433,6 @@
       50%       { opacity: 0.5; }
     }
 
-    /* ── Live indicator ── */
     .live-dot {
       display: inline-block;
       width: 7px; height: 7px;
@@ -410,7 +442,6 @@
       animation: pulse 2s ease infinite;
     }
 
-    /* ── Responsive tweaks ── */
     @media (max-width: 480px) {
       .wrapper { padding: 32px 16px 60px; }
       .card { padding: 20px 16px; }
@@ -425,15 +456,13 @@
 
 <div class="wrapper">
 
-  <!-- Header -->
   <header>
     <p class="header-eyebrow">// tool</p>
     <h1>Game Data<span>_</span>Maker</h1>
     <div class="accent-line"></div>
-    <p class="header-sub">Paste your text lines, pick a category and setting — structured JSON objects are generated live.</p>
+    <p class="header-sub">Paste your text lines, pick a category, setting, and spice level — structured JSON objects are generated live.</p>
   </header>
 
-  <!-- Inputs -->
   <section class="card" aria-label="Configuration">
     <div class="card-label">Configuration</div>
     <div class="controls-row">
@@ -467,10 +496,31 @@
           <option value="Solo">Solo</option>
         </select>
       </div>
+      <div class="spice-col">
+        <label for="spiceSlider">Spice <span id="spiceLabel" style="font-family:var(--mono);color:var(--accent);font-size:0.85rem;">0</span></label>
+        <div class="spice-control">
+          <div class="spice-row">
+            <input type="range" id="spiceSlider" min="-5" max="5" step="1" value="0" aria-label="Spice level from -5 to 5" />
+            <span class="spice-value zero" id="spiceDisplay" aria-live="polite">0</span>
+          </div>
+          <div class="spice-ticks">
+            <span>-5</span>
+            <span>-4</span>
+            <span>-3</span>
+            <span>-2</span>
+            <span>-1</span>
+            <span class="mid">0</span>
+            <span>1</span>
+            <span>2</span>
+            <span>3</span>
+            <span>4</span>
+            <span>5</span>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- Text input -->
   <section class="card" aria-label="Text input">
     <div class="card-label">Text Lines</div>
     <label for="textInput">Enter one item per line — each line becomes a JSON object</label>
@@ -486,26 +536,23 @@
     </div>
   </section>
 
-  <!-- Output -->
   <section class="card" aria-label="JSON output">
     <div class="card-label"><span class="live-dot"></span>Live Output</div>
     <div class="output-wrapper">
 
       <div class="action-bar">
-        <!-- Cut mode toggle -->
         <button
           class="cut-toggle"
           id="cutToggle"
           role="switch"
           aria-checked="false"
-          aria-label="Toggle cut mode — clears text after copying"
+          aria-label="Toggle cut mode"
           title="Cut mode: clears the input after copying"
         >
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
           Cut
         </button>
 
-        <!-- Copy / Cut button -->
         <button class="copy-btn" id="copyBtn" aria-label="Copy JSON to clipboard" title="Copy to clipboard">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="5" y="5" width="9" height="9" rx="1.5"/>
@@ -525,6 +572,9 @@
   const textInput    = document.getElementById('textInput');
   const categoryEl   = document.getElementById('category');
   const settingEl    = document.getElementById('setting');
+  const spiceSlider  = document.getElementById('spiceSlider');
+  const spiceDisplay = document.getElementById('spiceDisplay');
+  const spiceLabel   = document.getElementById('spiceLabel');
   const outputArea   = document.getElementById('outputArea');
   const lineCountEl  = document.getElementById('lineCount');
   const nonEmptyEl   = document.getElementById('nonEmptyCount');
@@ -534,24 +584,40 @@
 
   let cutMode = false;
 
+  /* ── Spice slider ── */
+  function updateSpiceDisplay() {
+    const val = parseInt(spiceSlider.value, 10);
+    spiceDisplay.textContent = val;
+    spiceLabel.textContent = val;
+
+    spiceDisplay.className = 'spice-value';
+    if (val < 0)      spiceDisplay.classList.add('negative');
+    else if (val > 0) spiceDisplay.classList.add('positive');
+    else              spiceDisplay.classList.add('zero');
+
+    spiceLabel.style.color = val < 0 ? '#7eb3ff' : val > 0 ? 'var(--accent)' : 'var(--text-muted)';
+
+    // Update slider fill track via gradient
+    const pct = ((val + 5) / 10) * 100;
+    const fillColor = val < 0 ? '#7eb3ff' : val > 0 ? '#ff2d78' : '#555';
+    spiceSlider.style.background = `linear-gradient(to right, ${fillColor} ${pct}%, var(--border) ${pct}%)`;
+  }
+
+  spiceSlider.addEventListener('input', () => { updateSpiceDisplay(); update(); });
+
   /* ── Cut toggle ── */
   cutToggle.addEventListener('click', () => {
     cutMode = !cutMode;
     cutToggle.classList.toggle('active', cutMode);
     cutToggle.setAttribute('aria-checked', String(cutMode));
-
-    // Update copy button label + style to reflect mode
     syncButtonLabel();
   });
 
-  function syncButtonLabel(state = null) {
-    // state: null = default, 'done' = success feedback
-    if (state === 'done') return; // handled separately
+  function syncButtonLabel() {
     copyBtn.classList.toggle('cut-mode', cutMode);
     const icon = cutMode
       ? `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-           <circle cx="5.5" cy="4.5" r="2"/>
-           <circle cx="5.5" cy="11.5" r="2"/>
+           <circle cx="5.5" cy="4.5" r="2"/><circle cx="5.5" cy="11.5" r="2"/>
            <path d="M14 3L7.5 6.5M14 13L7.5 9.5M7.5 6.5L7.5 9.5"/>
          </svg>`
       : `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -563,45 +629,41 @@
     copyBtn.setAttribute('title', cutMode ? 'Cut mode: copies and clears the input' : 'Copy to clipboard');
   }
 
-  /* ── Escape special chars in JSON strings ── */
   function escapeStr(s) {
-    return s
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"');
+    return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   }
 
-  /* ── Build plain text output ── */
-  function buildPlainText(lines, category, setting) {
+  function buildPlainText(lines, category, setting, spice) {
     return lines
-      .map(line => `  { text: "${escapeStr(line)}", category: "${escapeStr(category)}", setting: "${escapeStr(setting)}" },`)
+      .map(line => `  { text: "${escapeStr(line)}", category: "${escapeStr(category)}", setting: "${escapeStr(setting)}", spice: ${spice} },`)
       .join('\n');
   }
 
-  /* ── Build syntax-highlighted HTML ── */
-  function buildHighlightedHTML(lines, category, setting) {
+  function buildHighlightedHTML(lines, category, setting, spice) {
     return lines.map(line => {
       const t = escapeStr(line);
       const c = escapeStr(category);
       const s = escapeStr(setting);
+      const spiceClass = spice < 0 ? 'style="color:#7eb3ff"' : '';
       return (
         `  <span class="j-brace">{</span> ` +
         `<span class="j-key">text</span>: <span class="j-str">"${t}"</span>, ` +
         `<span class="j-key">category</span>: <span class="j-str">"${c}"</span>, ` +
-        `<span class="j-key">setting</span>: <span class="j-str">"${s}"</span> ` +
+        `<span class="j-key">setting</span>: <span class="j-str">"${s}"</span>, ` +
+        `<span class="j-key">spice</span>: <span class="j-num" ${spiceClass}>${spice}</span> ` +
         `<span class="j-brace">}</span><span class="j-comma">,</span>`
       );
     }).join('\n');
   }
 
-  /* ── Core update function ── */
   function update() {
     const raw      = textInput.value;
     const allLines = raw.split('\n');
     const lines    = allLines.map(l => l.trim()).filter(l => l.length > 0);
     const category = categoryEl.value;
     const setting  = settingEl.value;
+    const spice    = parseInt(spiceSlider.value, 10);
 
-    /* Update stats */
     lineCountEl.textContent  = allLines.length;
     nonEmptyEl.textContent   = lines.length;
     objCountEl.textContent   = lines.length;
@@ -612,52 +674,44 @@
       return;
     }
 
-    outputArea.innerHTML = buildHighlightedHTML(lines, category, setting);
+    outputArea.innerHTML = buildHighlightedHTML(lines, category, setting, spice);
     outputArea.classList.add('has-content');
   }
 
-  /* ── Event listeners ── */
   textInput.addEventListener('input', update);
   categoryEl.addEventListener('change', update);
   settingEl.addEventListener('change', update);
 
-  /* ── Copy / Cut to clipboard ── */
   copyBtn.addEventListener('click', async () => {
-    const raw    = textInput.value;
-    const lines  = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const raw   = textInput.value;
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     if (lines.length === 0) return;
 
-    const plain = buildPlainText(lines, categoryEl.value, settingEl.value);
+    const spice = parseInt(spiceSlider.value, 10);
+    const plain = buildPlainText(lines, categoryEl.value, settingEl.value, spice);
 
-    const doClipboard = async () => {
-      try {
-        await navigator.clipboard.writeText(plain);
-      } catch {
-        /* Fallback for older browsers */
-        const el = document.createElement('textarea');
-        el.value = plain;
-        el.style.position = 'fixed';
-        el.style.opacity = '0';
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-      }
-    };
+    try {
+      await navigator.clipboard.writeText(plain);
+    } catch {
+      const el = document.createElement('textarea');
+      el.value = plain;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
 
-    await doClipboard();
-
-    /* If cut mode: clear the textarea and flash it */
     if (cutMode) {
       textInput.value = '';
       update();
-      textInput.classList.remove('cut-flash'); // reset to re-trigger animation
-      void textInput.offsetWidth;              // force reflow
+      textInput.classList.remove('cut-flash');
+      void textInput.offsetWidth;
       textInput.classList.add('cut-flash');
       textInput.addEventListener('animationend', () => textInput.classList.remove('cut-flash'), { once: true });
     }
 
-    /* Success feedback */
     const label = cutMode ? 'Cut!' : 'Copied!';
     const checkIcon = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>`;
     copyBtn.classList.add('copied');
@@ -670,9 +724,9 @@
     }, 2200);
   });
 
-  /* ── Initial render ── */
   update();
   syncButtonLabel();
+  updateSpiceDisplay();
 </script>
 
 </body>
